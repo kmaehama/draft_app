@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>指名</title>
+    </head>
+    <body>
+    {% if your_turn == True %}
+    <h1>{{rank}}順目の選手を指名してください。</h1>
+    <form action="/nominate" method="POST">
+        <input type="text" name="name" placeholder="選手名">
+        <input type="text" name="team" placeholder="チーム名">
+        <input type="submit" value="指名">
+    </form>
+    {% else %}
+    <h1>現在他の球団が指名を行っています。</h1>
+    {% endif %}
+    {% if name and status==True%}
+    <p>{{rank}}順目で{{name}}({{team}})を指名しました。</p>
+    {% elif status==False %}
+    <p>鴨川です。</p>
+    {% else %}
+    <p>鴨川には気をつけてね。</p>
+    {% endif %}
+    </body>
+    <a href="/index">戻る</a>
+</html>
