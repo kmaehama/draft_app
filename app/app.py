@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for
+from flask_socketio import SocketIO, emit
 from models.models import Player, User
 from models.database import db_session
 from src.collect_player import collect
@@ -9,6 +10,10 @@ import json
 
 app = Flask(__name__)
 app.secret_key = key.SECRET_KEY
+
+app.config['SECRET_KEY'] = 'hoge'
+socketio = SocketIO(app, async_mode=None)
+
 
 @app.route("/login",methods=["post"])
 def login():
@@ -56,9 +61,12 @@ def nominate_post():
     dteam = session["user_name"]
     name = request.form["name"]
     team = request.form["team"]
+    rank = 0
     can_nominate = False
+    your_turn = True
     try:
-        p = db_session.query(Player).filter(Player.name==name).first()
+        p = db_session.query(Player).filter(Player.name==name).filter(Player.team==team).first()
+        print(p)
         if p.rank == 0:
             with open("app/tmp/tmp.json", "r") as f:
                 d = json.load(f)
@@ -82,11 +90,17 @@ def nominate_post():
                     d["now_rank"] += 1
                 else:
                     d["now_team"] -= 1
+            
             with open("app/tmp/tmp.json", "w") as f:
                 json.dump(d, f)
+            your_turn = False    
+
+            #socketio.emit('response', {'dteam': dteam, 'rank': rank, 'name': name, 'team': team}, namespace='/show_nominate')
+        else:
+            print("kamogawa")
     except:
-        print("maybe kamogawa")
-    return render_template("nominate.html", name=name, team=team, rank=rank, status=can_nominate, your_turn=~can_nominate)
+        print("something wrong")
+    return render_template("nominate.html", name=name, team=team, rank=rank, status=can_nominate, your_turn=your_turn)
 
 
 @app.route("/member")
@@ -165,5 +179,11 @@ def create():
 
     return render_template("top.html",status="logout")
 
+
+@app.route("/show")
+def show():
+    return render_template("show.html")
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app)
