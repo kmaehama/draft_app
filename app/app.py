@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, session, redirect, url_for
-from flask_socketio import SocketIO, emit
 from models.models import Player, User
 from models.database import db_session
 from src.collect_player import collect
@@ -10,9 +9,6 @@ import json
 
 app = Flask(__name__)
 app.secret_key = key.SECRET_KEY
-
-app.config['SECRET_KEY'] = 'hoge'
-socketio = SocketIO(app, async_mode=None)
 
 
 @app.route("/login",methods=["post"])
@@ -43,15 +39,28 @@ def index():
 @app.route("/nominate")
 def nominate():
     if "user_name" in session:
-        f = open("app/tmp/tmp.json", "r")
-        d = json.load(f)
+        #いま自分の番かどうか判定するための変数
+        with open("app/tmp/tmp.json", "r") as f:
+            d = json.load(f)
         teams = d["teams"]
         rank = d["now_rank"]
         now_team = d["now_team"]
-        if session["user_name"] == teams[now_team]:
-            return render_template("nominate.html", rank=rank, your_turn=True)
+
+        your_turn = False
+        if rank != 1:
+            if session["user_name"] == teams[now_team]:
+                your_turn = True
+        #1巡目指名のときのための変数
         else:
-            return render_template("nominate.html", rank=rank, your_turn=False)
+            with open("app/tmp/dora1.json", "r") as f:
+                dora1 = json.load(f)
+            dora1already = dora1["already"]
+
+            if False in dora1already:
+                if teams[dora1already.index(False)] == session["user_name"]:
+                    your_turn = True
+
+        return render_template("nominate.html", rank=rank, your_turn=your_turn)
     else:
         return redirect(url_for("top", status="logout"))
 
@@ -61,43 +70,59 @@ def nominate_post():
     dteam = session["user_name"]
     name = request.form["name"]
     team = request.form["team"]
-    rank = 0
+
+    with open("app/tmp/tmp.json", "r") as f:
+        d = json.load(f)
+    rank = d["now_rank"]
+    teams = d["teams"]
+    now_team = d["now_team"]
+
     can_nominate = False
     your_turn = True
     try:
+        #入力された選手が存在しなければエラーになる
         p = db_session.query(Player).filter(Player.name==name).filter(Player.team==team).first()
-        print(p)
         if p.rank == 0:
-            with open("app/tmp/tmp.json", "r") as f:
-                d = json.load(f)
-            rank = d["now_rank"]
-
             can_nominate = True
-            p.dteam = dteam
-            p.rank = rank
-            db_session.add(p)
-            db_session.commit()
+            if rank != 1:
+                p.dteam = dteam
+                p.rank = rank
+                db_session.add(p)
+                db_session.commit()
 
-            teams = d["teams"]
-            now_team = d["now_team"]
-            if rank % 2 == 0:
-                if now_team == len(teams) - 1:
-                    d["now_rank"] += 1
-                else:
-                    d["now_team"] += 1
+                msg = "{}が第{}順で{}({})を指名しました。".format(dteam, rank, name, team)
+                print(msg)
             else:
-                if now_team == 0:
-                    d["now_rank"] += 1
+                with open("app/tmp/dora1.json", "r") as f:
+                    dora1 = json.load(f)
+                dora1already = dora1["already"]
+                dora1["dora1list"][dora1already.index(False)] = name
+                dora1["already"][dora1already.index(False)] = True
+                with open("app/tmp/dora1.json", "w") as f:
+                    json.dump(dora1, f)
+                print("第1順選択希望選手")
+                print(dteam)
+                print(name)
+                print(team)
+                
+            if rank != 1:
+                if rank % 2 == 0:
+                    if now_team == len(teams) - 1:
+                        d["now_rank"] += 1
+                    else:
+                        d["now_team"] += 1
+                        your_turn = False
                 else:
-                    d["now_team"] -= 1
-            
-            with open("app/tmp/tmp.json", "w") as f:
-                json.dump(d, f)
-            your_turn = False    
-
-            #socketio.emit('response', {'dteam': dteam, 'rank': rank, 'name': name, 'team': team}, namespace='/show_nominate')
+                    if now_team == 0:
+                        d["now_rank"] += 1
+                    else:
+                        d["now_team"] -= 1
+                        your_turn = False
+                
+                with open("app/tmp/tmp.json", "w") as f:
+                    json.dump(d, f)
         else:
-            print("kamogawa")
+            print("鴨川です。")
     except:
         print("something wrong")
     return render_template("nominate.html", name=name, team=team, rank=rank, status=can_nominate, your_turn=your_turn)
@@ -177,13 +202,79 @@ def create():
     with open('app/tmp/tmp.json', 'w') as f:
         json.dump(d, f)
 
+    dora1 = {}
+    dora1list = []
+    dora1already = []
+    for i in range(len(teams)):
+        dora1list.append("")
+        dora1already.append(False)
+    dora1["dora1list"] = dora1list
+    dora1["already"] = dora1already
+    with open('app/tmp/dora1.json', 'w') as f:
+        json.dump(dora1, f)
+
     return render_template("top.html",status="logout")
 
 
-@app.route("/show")
-def show():
-    return render_template("show.html")
+@app.route("/dora1")
+def dora1():
+    with open("app/tmp/dora1.json", "r") as f:
+        dora1 = json.load(f)
+    dora1list = dora1["dora1list"]
+    already = dora1["already"]
+    if False in already:
+        return render_template("dora1.html", mode="still")
+    else:
+        with open("app/tmp/tmp.json", "r") as f:
+            d = json.load(f)
+        teams = d["teams"]
+        dora1_dict = {}
+        for i in range(len(teams)):
+            dteam = teams[i]
+            name = dora1list[i]
+            if name not in dora1_dict:
+                dora1_dict[name] = [dteam]
+            else:
+                dora1_dict[name].append(dteam)
+        
+        return render_template("dora1.html", mode="kuji", dora1dict=dora1_dict)
+
+@app.route("/dora1", methods=["post"])
+def dora1_post():
+    mode = "decision"
+    with open("app/tmp/tmp.json", "r") as f:
+        d = json.load(f)
+    teams = d["teams"]
+    with open("app/tmp/dora1.json", "r") as f:
+        dora1 = json.load(f)
+    dora1list = dora1["dora1list"]
+    result = request.form
+    for name, team in result.items():
+        for i in range(len(dora1list)):
+            if name == dora1list[i]:
+                if teams[i] != team:
+                    dora1["dora1list"][i] = ""
+                    dora1["already"][i] = False
+                else:
+                    print("{}は{}が抽選権を獲得しました。".format(name, team))
+    with open("app/tmp/dora1.json", "w") as f:
+        json.dump(dora1, f)
+    for i in range(len(dora1["already"])):
+        if dora1["already"][i] == True:
+            p = db_session.query(Player).filter(Player.name==dora1["dora1list"][i]).first()
+            p.dteam = teams[i]
+            p.rank = 1
+            db_session.add(p)
+            db_session.commit()
+    if False not in dora1["already"]:
+        d["now_rank"] = 2
+        with open("app/tmp/tmp.json", "w") as f:
+            json.dump(d, f)
+        print("すべての球団の1位指名が終わりました。")
+        print("引き続き、2巡目の指名を始めてください。")
+        mode = "finish"
+    return render_template("dora1.html", mode=mode)
 
 
 if __name__ == "__main__":
-    socketio.run(app)
+    app.run()

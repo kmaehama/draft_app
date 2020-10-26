@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    </head>
+    <body>
+        {% if mode == "kuji" %}
+        <form action="/dora1" method="post">
+            {% for key, value in dora1dict.items() %}
+            {% if value|length == 1 %}
+            <h2>{{key}}は{{value[0]}}が交渉権を獲得しました。</h2>
+            {% else %}
+            <h2>{{key}}は以下の{{value|length}}球団で競合したので、抽選を行ってください。</h2>
+            {% for team in value %}
+            <input type="radio" name="{{key}}" value="{{team}}">{{team}}
+            {% endfor %}
+            {% endif %}
+            {% endfor %}
+            <p><input type="submit" value="交渉権確定"></p>
+        </form>
+        {% elif mode == "decision" %}
+        <h1>引き続き一位指名を行ってください。</h1>
+        {% elif mode == "finish" %}
+        <h1>すべての球団の1位指名が終わりました。</h1>
+        <h1>引き続き、2巡目の指名を始めてください。</h1>
+        {% else %}
+        <h1>すべての球団が指名を終えるまでお待ち下さい。</h1>
+        {% endif %}
+    </body>
+</html>
