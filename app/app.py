@@ -93,8 +93,25 @@ def nominate_post():
             if rank != 1:
                 p.dteam = dteam
                 p.rank = rank
+                p.position = position
                 db_session.add(p)
                 db_session.commit()
+
+                nominated = {"dteam": dteam, "name": name, "position": position, "team": team}
+                if now_team == 0 and now_rank % 2 == 0:
+                    all_nominated = {1: nominated}
+                    with open("app/tmp/recently.json", "w") as f:
+                        json.dump(all_nominated, f)
+                elif now_team == 11 and now_rank % 2 == 1:
+                    all_nominated = {12: nominated}
+                    with open("app/tmp/recently.json", "w") as f:
+                        json.dump(all_nominated, f)
+                else:
+                    with open("app/tmp/recently.json", "r") as f:
+                        all_nominated = json.load(f)
+                    all_nominated[now_team+1] = nominated
+                    with open("app/tmp/recently.json", "w") as f:
+                        json.dump(all_nominated, f)
 
                 msg = "{}が第{}順で{}({}、{})を指名しました。".format(dteam, rank, name, team, position)
                 print(msg)
@@ -103,6 +120,7 @@ def nominate_post():
                     dora1 = json.load(f)
                 dora1already = dora1["already"]
                 dora1["dora1list"][dora1already.index(False)] = name
+                dora1["positions"][dora1already.index(False)] = position
                 dora1["already"][dora1already.index(False)] = True
                 with open("app/tmp/dora1.json", "w") as f:
                     json.dump(dora1, f)
@@ -249,11 +267,14 @@ def create():
 
     dora1 = {}
     dora1list = []
+    positions = []
     dora1already = []
     for i in range(len(teams)):
         dora1list.append("")
+        positions.append("")
         dora1already.append(False)
     dora1["dora1list"] = dora1list
+    dora1["positions"] = positions
     dora1["already"] = dora1already
     with open('app/tmp/dora1.json', 'w') as f:
         json.dump(dora1, f)
@@ -306,6 +327,7 @@ def dora1_post():
             if name == dora1list[i]:
                 if teams[i] != team:
                     dora1["dora1list"][i] = ""
+                    dora1["positions"][i] = ""
                     dora1["already"][i] = False
                 else:
                     print("{}は{}が抽選権を獲得しました。".format(name, team))
@@ -316,6 +338,7 @@ def dora1_post():
             p = db_session.query(Player).filter(Player.name==dora1["dora1list"][i]).first()
             p.dteam = teams[i]
             p.rank = 1
+            p.position = dora1["positions"][i]
             db_session.add(p)
             db_session.commit()
     if False not in dora1["already"]:
@@ -331,7 +354,10 @@ def dora1_post():
 
 @app.route("/show")
 def show():
-    return render_template("show.html")
+    with open("app/tmp/recently.json", "r") as f:
+        all_nominated = json.load(f)
+    return render_template("show.html", all_nominated=all_nominated)
+    #return render_template("show.html")
 
 
 if __name__ == "__main__":

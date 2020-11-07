@@ -5,7 +5,7 @@
     <body>
         <h1>{{name}}の指名選手一覧</h1>
         {% for player in players %}
-        <p>{{player.rank}}位：{{player.name}}（{{player.team}}）</p>
+        <p>{{player.rank}}位：{{player.name}}（{{player.position}}、{{player.team}}）</p>
         {% endfor %}
     </body>
     <a href="/index">戻る</a>

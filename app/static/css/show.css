@@ -1,0 +1,29 @@
+div {
+    display: block;
+}
+
+.box{
+    border:10px;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    height:140px;
+    width:200px;
+}
+
+.dteam{padding:0 5px 5px 10px;}
+
+.name{
+    font-weight:700;
+    font-size: 25px;
+    padding:20px 5px 0 10px;
+}
+
+.position{padding:0 5px 0 10px;}
+
+.team{padding:0 5px 0 10px;}
+
+.soon{
+    text-align: center;
+    padding: 50px 0;
+}

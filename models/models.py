@@ -9,12 +9,14 @@ class Player(Base):
     team = Column(String(16))
     dteam = Column(String(16), default="")
     rank = Column(Integer, default=0)
+    position = Column(String(16))
 
-    def __init__(self, name=None, team=None, already=None, rank=None):
+    def __init__(self, name=None, team=None, already=None, rank=None, position=None):
         self.name = name
         self.team = team
         self.already = already
         self.rank = rank
+        self.position = position
 
     def __repr__(self):
         return '<Name %r>' % (self.name)
