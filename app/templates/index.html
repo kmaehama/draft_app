@@ -5,7 +5,13 @@
     <a href="/logout">ログアウトする</a>
     <body>
         <h1>ようこそ、{{name}}さん。</h1>
+        {% if name == "Master" %}
+        <a href="/setting">リセット</a>
+        <a href="dora1">第一順指名</a>
+        {% else %}
         <a href="/nominate">指名</a>
-        <a href="/member">指名選手一覧</a>
+        <a href="/member">自球団の指名一覧</a>
+        <a href="/all">全球団の指名一覧</a>
+        {% endif %}
     </body>
 </html>

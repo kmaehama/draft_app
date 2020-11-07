@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    </head>
+    <body>
+        <table border="1">
+            <tr>
+                <th width="4%"></th>
+                {% for team in teams %}
+                <th width="8%">{{team}}</th>
+                {% endfor %}
+            </tr>
+            {% for i in range(now_rank-1) %}
+            <tr>
+                <td>{{i+1}}位</td>
+                {% for team in teams %}
+                <td>{{all_list[team][i]}}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            <tr>
+                <td>{{now_rank}}位</td>
+                {% for team in teams %}
+                {% if all_list[team]|length == now_rank %}
+                <td>{{all_list[team][now_rank-1]}}</td>
+                {% else %}
+                <td></td>
+                {% endif %}
+                {% endfor %}
+            </tr>
+        </table>
+    </body>
+    <a href="/index">戻る</a>
+</html>

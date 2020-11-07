@@ -5,7 +5,7 @@ from models.database import Base
 class Player(Base):
     __tablename__ = 'players'
     id = Column(Integer, primary_key=True)
-    name = Column(String(16), unique=True)
+    name = Column(String(16))
     team = Column(String(16))
     dteam = Column(String(16), default="")
     rank = Column(Integer, default=0)

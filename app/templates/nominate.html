@@ -9,16 +9,22 @@
     <form action="/nominate" method="POST">
         <input type="text" name="name" id="name" placeholder="選手名">
         <input type="text" name="team" id="team" placeholder="チーム名">
+        <select name="position">
+            <option value="投手">投手</option>
+            <option value="捕手">捕手</option>
+            <option value="内野手">内野手</option>
+            <option value="外野手">外野手</option>
+        </select>
         <input type="submit" value="指名">
     </form>
     {% elif rank == 1 %}
     <h1>他の球団の1位指名をお待ちください。</h1>
     {% else %}
-    <h1>現在他の球団が指名を行っています。</h1>
+    <h1>現在{{now_team}}さんが指名を行っています。</h1>
     {% endif %}
     
     {% if name and status==True%}
-    <p>{{rank}}順目で{{name}}({{team}})を指名しました。</p>
+    <p>{{rank}}順目で{{name}}({{team}}、{{position}})を指名しました。</p>
     {% elif status==False %}
     <p>鴨川です。</p>
     {% else %}
