@@ -6,8 +6,6 @@ from app import key
 from hashlib import sha256
 from sqlalchemy import desc
 import json
-import websockets
-import asyncio
 
 
 app = Flask(__name__)
@@ -98,11 +96,11 @@ def nominate_post():
                 db_session.commit()
 
                 nominated = {"dteam": dteam, "name": name, "position": position, "team": team}
-                if now_team == 0 and now_rank % 2 == 0:
+                if now_team == 0 and rank % 2 == 0:
                     all_nominated = {1: nominated}
                     with open("app/tmp/recently.json", "w") as f:
                         json.dump(all_nominated, f)
-                elif now_team == 11 and now_rank % 2 == 1:
+                elif now_team == 11 and rank % 2 == 1:
                     all_nominated = {12: nominated}
                     with open("app/tmp/recently.json", "w") as f:
                         json.dump(all_nominated, f)
@@ -154,7 +152,8 @@ def nominate_post():
                 your_turn = False
         else:
             print("鴨川です。")
-    except:
+    except Exception as e:
+        print(e)
         print("その選手は存在しません。")
     return render_template("nominate.html", name=name, team=team, position=position, rank=next_rank, status=can_nominate, your_turn=your_turn, now_team=teams[next_team])
 
@@ -356,7 +355,10 @@ def dora1_post():
 def show():
     with open("app/tmp/recently.json", "r") as f:
         all_nominated = json.load(f)
-    return render_template("show.html", all_nominated=all_nominated)
+    with open("app/tmp/tmp.json", "r") as f:
+        d = json.load(f)
+    teams = d["teams"]
+    return render_template("show.html", all_nominated=all_nominated, teams=teams)
     #return render_template("show.html")
 
 

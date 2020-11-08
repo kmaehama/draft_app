@@ -11,13 +11,14 @@
                 <td>
                     {% if (i*3+j+1)|string() in all_nominated %}
                     <div class="box">
-                        <div class="dteam">{{all_nominated[(i*3+j+1)|string()]["dteam"]}}</div>
+                        <div class="dteam">{{teams[i*3+j]}}</div>
                         <div class="name">{{all_nominated[(i*3+j+1)|string()]["name"]}}</div>
                         <div class="position">{{all_nominated[(i*3+j+1)|string()]["position"]}}</div>
                         <div class="team">{{all_nominated[(i*3+j+1)|string()]["team"]}}</div>
                     </div>
                     {% else %}
                     <div class="box">
+                        <div class="dteam">{{teams[i*3+j]}}</div>
                         <div class="soon">coming soon</div>
                     </div>
                     {% endif %}
